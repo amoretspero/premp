@@ -1,0 +1,9 @@
+C:\Users\Jiung\Documents\C#\premp\premp\bin\Debug\premp.exe.config
+C:\Users\Jiung\Documents\C#\premp\bin\Debug\premp.exe.config
+C:\Users\Jiung\Documents\C#\premp\bin\Debug\premp.exe
+C:\Users\Jiung\Documents\C#\premp\bin\Debug\premp.pdb
+C:\Users\Jiung\Documents\C#\premp\bin\Debug\Magick.NET-Q16-HDRI-AnyCPU.dll
+C:\Users\Jiung\Documents\C#\premp\bin\Debug\Magick.NET-Q16-HDRI-AnyCPU.xml
+C:\Users\Jiung\Documents\C#\premp\obj\Debug\premp.csprojResolveAssemblyReference.cache
+C:\Users\Jiung\Documents\C#\premp\obj\Debug\premp.exe
+C:\Users\Jiung\Documents\C#\premp\obj\Debug\premp.pdb
