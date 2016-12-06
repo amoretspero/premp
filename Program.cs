@@ -10,7 +10,7 @@ using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.Util;
 
-namespace PdfConverter
+namespace Premp
 {
     class Program
     {
@@ -47,9 +47,42 @@ namespace PdfConverter
                 }
             }*/
             Mat img = new Mat("test-Page1.jpg", Emgu.CV.CvEnum.LoadImageType.AnyColor);
-            Mat subimg = new Mat(img, new System.Drawing.Rectangle(360, 1536, 2048, 2048));
-            Image<Bgr, Byte> subimgTemp = subimg.ToImage<Bgr, Byte>();
-            subimgTemp.Save("subimgTemp.jpg");
+            int imgWidth = img.Width;
+            int imgHeight = img.Height;
+            int horizontalSize = 512;
+            int verticalSize = 256;
+            int horizontalStride = 128;
+            int verticalStride = 64;
+            int minRegionWidth = img.Width / 3;
+            int maxRegionWidth = img.Width / 2;
+            int minRegionHeight = img.Height / 24;
+            int maxRegionHeight = img.Height / 2;
+
+            double stdMin = 16.0;
+            double stdMax = 64.0;
+
+            foreach (var file in Directory.GetFiles("../../SubImageStrideTemp"))
+            {
+                File.Delete(file);
+            }
+            File.Delete("../../SubImageStrideTemp/AvgSdvInfo.txt");
+            for (int vs = 0; vs + verticalSize < imgHeight; vs += verticalStride)
+            {
+                for (int hs = 0; hs + horizontalSize < imgWidth; hs += horizontalStride)
+                {
+                    Mat subimg = new Mat(img, new System.Drawing.Rectangle(hs, vs, horizontalSize, verticalSize));
+                    Image<Bgr, Byte> subimgTemp = subimg.ToImage<Bgr, Byte>();
+                    Bgr averageColor = new Bgr();
+                    MCvScalar std = new MCvScalar();
+                    subimgTemp.AvgSdv(out averageColor, out std);
+                    if ((std.V0 < stdMax && std.V0 > stdMin) && (std.V1 < stdMax && std.V1 > stdMin) && (std.V2 < stdMax && std.V2 > stdMin))
+                    {
+                        subimgTemp.Save("../../SubImageStrideTemp/subimgTemp-" + vs.ToString() + "-" + hs.ToString() + ".jpg");
+                        Console.WriteLine("Sub image with vertical pixel from {0} to {1}, horizontal pixel from {2} to {3} saved.", vs, vs + verticalSize, hs, hs + horizontalSize);
+                        File.AppendAllText("../../SubImageStrideTemp/AvgSdvInfo.txt", "[" + vs.ToString() + " - " + (vs + verticalSize).ToString() + ", " + hs.ToString() + "-" + (hs + horizontalSize).ToString() + "] = Average Color: " + averageColor.ToString() + ", Standard Deviation[V0, V1, V2, V3]: [" + std.V0.ToString() + ", " + std.V1.ToString() + ", " + std.V2.ToString() + ", " + std.V3.ToString() + "]" + System.Environment.NewLine);
+                    }
+                }
+            }
             Console.WriteLine("NumberOfChannels: {0}", img.NumberOfChannels);
         }
     }
