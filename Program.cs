@@ -28,9 +28,9 @@ namespace Premp
             Console.WriteLine("Ghostscript directory: {0}", Directory.GetCurrentDirectory());
 
             MagickReadSettings settings = new MagickReadSettings();
-            settings.Density = new Density(600, 600);
+            settings.Density = new Density(300, 300);
 
-            /*using (MagickImageCollection images = new MagickImageCollection())
+            using (MagickImageCollection images = new MagickImageCollection())
             {
                 Console.WriteLine("Started reading image.");
                 images.Read("test.pdf", settings);
@@ -45,14 +45,14 @@ namespace Premp
                     Console.WriteLine("Finished writing page {0}", page);
                     page++;
                 }
-            }*/
+            }
             Mat img = new Mat("test-Page1.jpg", Emgu.CV.CvEnum.LoadImageType.AnyColor);
             int imgWidth = img.Width;
             int imgHeight = img.Height;
-            int horizontalSize = 128;
-            int verticalSize = 128;
-            int horizontalStride = 64;
-            int verticalStride = 32;
+            int horizontalSize = 32;
+            int verticalSize = 32;
+            int horizontalStride = 8;
+            int verticalStride = 8;
             int minRegionWidth = img.Width / 3;
             int maxRegionWidth = img.Width / 2;
             int minRegionHeight = img.Height / 24;
@@ -90,6 +90,8 @@ namespace Premp
 
             var isSdvInRange = new bool[(imgHeight - verticalSize) / verticalStride + 1, (imgWidth - horizontalSize) / horizontalStride + 1];
 
+            StringBuilder AvgSdvInfoText = new StringBuilder();
+
             for (int i = 1; i < (imgHeight - verticalSize)/verticalStride - 2; i++)
             {
                 for (int j = 1; j < (imgWidth - horizontalSize)/horizontalStride - 2; j++)
@@ -112,10 +114,15 @@ namespace Premp
                         && ((cell_r1.averageSdv.V0 < stdMax && cell_r1.averageSdv.V0 > stdMin) && (cell_r1.averageSdv.V1 < stdMax && cell_r1.averageSdv.V1 > stdMin) && (cell_r1.averageSdv.V2 < stdMax && cell_r1.averageSdv.V2 > stdMin))
                         && ((Math.Abs(std.V0 - cell_l1.averageSdv.V0) > 0.1 && Math.Abs(std.V0 - cell_r1.averageSdv.V0) > 0.1 && Math.Abs(cell_l1.averageSdv.V0 - cell_r1.averageSdv.V0) > 0.1) && (Math.Abs(std.V1 - cell_l1.averageSdv.V1) > 0.1 && Math.Abs(std.V1 - cell_r1.averageSdv.V1) > 0.1 && Math.Abs(cell_l1.averageSdv.V1 - cell_r1.averageSdv.V1) > 0.1) && (Math.Abs(std.V2 - cell_l1.averageSdv.V2) > 0.1 && Math.Abs(std.V2 - cell_r1.averageSdv.V2) > 0.1 && Math.Abs(cell_l1.averageSdv.V2 - cell_r1.averageSdv.V2) > 0.1)))
                     {
-                        subImg.Save("../../SubImageStrideTemp/subimgTemp-" + vs.ToString() + "-" + hs.ToString() + ".jpg");
-                        Console.WriteLine("Sub image with vertical pixel from {0} to {1}, horizontal pixel from {2} to {3} saved.", vs, vs + verticalSize, hs, hs + horizontalSize);
+                        //subImg.Save("../../SubImageStrideTemp/subimgTemp-" + vs.ToString() + "-" + hs.ToString() + ".jpg");
+                        //Console.WriteLine("Sub image with vertical pixel from {0} to {1}, horizontal pixel from {2} to {3} saved.", vs, vs + verticalSize, hs, hs + horizontalSize);
+                        //Console.WriteLine("Sub image with vertical pixel from {0} to {1}, horizontal pixel from {2} to {3} selected.", vs, vs + verticalSize, hs, hs + horizontalSize);
                         isSelected = true;
                         
+                    }
+                    else
+                    {
+                        //Console.WriteLine("Sub image with vertical pixel from {0} to {1}, horizontal pixel from {2} to {3} NOT selected.", vs, vs + verticalSize, hs, hs + horizontalSize);
                     }
                     var isSelectedString = "[X]";
                     if (isSelected)
@@ -127,11 +134,14 @@ namespace Premp
                     {
                         isSdvInRange[i, j] = false;
                     }
-                    File.AppendAllText("../../SubImageStrideTemp/AvgSdvInfo.txt", "[" + vs.ToString() + " - " + (vs + verticalSize).ToString() + ", " + hs.ToString() + "-" + (hs + horizontalSize).ToString() + "] = Average Color: " + averageColor.ToString() + ", Standard Deviation[V0, V1, V2, V3]: [" + std.V0.ToString() + ", " + std.V1.ToString() + ", " + std.V2.ToString() + ", " + std.V3.ToString() + "]" + ", " + isSelectedString + System.Environment.NewLine);
+                    //File.AppendAllText("../../SubImageStrideTemp/AvgSdvInfo.txt", "[" + vs.ToString() + " - " + (vs + verticalSize).ToString() + ", " + hs.ToString() + "-" + (hs + horizontalSize).ToString() + "] = Average Color: " + averageColor.ToString() + ", Standard Deviation[V0, V1, V2, V3]: [" + std.V0.ToString() + ", " + std.V1.ToString() + ", " + std.V2.ToString() + ", " + std.V3.ToString() + "]" + ", " + isSelectedString + System.Environment.NewLine);
+                    AvgSdvInfoText.AppendFormat("[{0} - {1}, {2} - {3}] = Average Color: {4}, Standard Deviation[V0, V1, V2, V3]: [{5}, {6}, {7}, {8}] - [{9}]\n", vs, (vs + verticalSize), hs, (hs + horizontalSize), averageColor, std.V0, std.V1, std.V2, std.V3, isSelectedString);
                 }
+                Console.WriteLine("Sub images with vertical pixel from {0} to {1} finished.", cells[i, 0].verticalLocation, cells[i, 0].verticalLocation + verticalSize);
             }
             //new MatrixUtils().PrintMatrix<bool>(isSdvInRange, "../../SubImageStrideTemp/SdvInfo.txt");
             new MatrixUtils().PrintMatrix(isSdvInRange, "../../SubImageStrideTemp/SdvInfo.txt");
+            File.AppendAllText("../../SubImageStrideTemp/AvgSdvInfo.txt", AvgSdvInfoText.ToString());
         }
         
     }
@@ -194,27 +204,27 @@ namespace Premp
             }
             var rowCnt = mat.GetLength(0);
             var columnCnt = mat.GetLength(1);
-            var resultString = "";
+            StringBuilder resultString = new StringBuilder();
             for (int i = 0; i < rowCnt; i++)
             {
                 for (int j = 0; j < columnCnt; j++)
                 {
                     if (mat[i, j])
                     {
-                        resultString += "1";
+                        resultString.AppendFormat("1");
                     }
                     else
                     {
-                        resultString += "0";
+                        resultString.AppendFormat("0");
                     }
                     if (j < columnCnt - 1)
                     {
-                        resultString += ", ";
+                        resultString.AppendFormat(", ");
                     }
                 }
-                resultString += System.Environment.NewLine;
+                resultString.AppendFormat(System.Environment.NewLine);
             }
-            File.WriteAllText(fileName, resultString);
+            File.WriteAllText(fileName, resultString.ToString());
         }
     }
 }
