@@ -49,17 +49,17 @@ namespace Premp
             Mat img = new Mat("test-Page1.jpg", Emgu.CV.CvEnum.LoadImageType.AnyColor);
             int imgWidth = img.Width;
             int imgHeight = img.Height;
-            int horizontalSize = 256;
-            int verticalSize = 256;
-            int horizontalStride = 128;
-            int verticalStride = 64;
+            int horizontalSize = 128;
+            int verticalSize = 128;
+            int horizontalStride = 64;
+            int verticalStride = 32;
             int minRegionWidth = img.Width / 3;
             int maxRegionWidth = img.Width / 2;
             int minRegionHeight = img.Height / 24;
             int maxRegionHeight = img.Height / 2;
 
             double stdMin = 16.0;
-            double stdMax = 72.0;
+            double stdMax = 96.0;
 
             //List<KeyValuePair<CellLocation, Cell>> cells = new List<KeyValuePair<CellLocation, Cell>>();
 
@@ -87,6 +87,8 @@ namespace Premp
             Console.WriteLine("NumberOfChannels: {0}", img.NumberOfChannels);
 
             Console.WriteLine("Finished collecting cell info.");
+
+            var isSdvInRange = new bool[(imgHeight - verticalSize) / verticalStride + 1, (imgWidth - horizontalSize) / horizontalStride + 1];
 
             for (int i = 1; i < (imgHeight - verticalSize)/verticalStride - 2; i++)
             {
@@ -116,12 +118,22 @@ namespace Premp
                         
                     }
                     var isSelectedString = "[X]";
-                    if (isSelected) { isSelectedString = "[O]"; }
+                    if (isSelected)
+                    {
+                        isSelectedString = "[O]";
+                        isSdvInRange[i, j] = true;
+                    }
+                    else
+                    {
+                        isSdvInRange[i, j] = false;
+                    }
                     File.AppendAllText("../../SubImageStrideTemp/AvgSdvInfo.txt", "[" + vs.ToString() + " - " + (vs + verticalSize).ToString() + ", " + hs.ToString() + "-" + (hs + horizontalSize).ToString() + "] = Average Color: " + averageColor.ToString() + ", Standard Deviation[V0, V1, V2, V3]: [" + std.V0.ToString() + ", " + std.V1.ToString() + ", " + std.V2.ToString() + ", " + std.V3.ToString() + "]" + ", " + isSelectedString + System.Environment.NewLine);
                 }
             }
-
+            //new MatrixUtils().PrintMatrix<bool>(isSdvInRange, "../../SubImageStrideTemp/SdvInfo.txt");
+            new MatrixUtils().PrintMatrix(isSdvInRange, "../../SubImageStrideTemp/SdvInfo.txt");
         }
+        
     }
 
     public class Cell
@@ -146,5 +158,63 @@ namespace Premp
         public int x { get; set; }
 
         public int y { get; set; }
+    }
+
+    public class MatrixUtils
+    {
+        public void PrintMatrix<T>(T[,] mat, string fileName)
+        {
+            if (File.Exists(fileName))
+            {
+                File.Delete(fileName);
+            }
+            var rowCnt = mat.GetLength(0);
+            var columnCnt = mat.GetLength(1);
+            var resultString = "";
+            for (int i = 0; i < rowCnt; i++)
+            {
+                for (int j = 0; j < columnCnt; j++)
+                {
+                    resultString += mat[i, j].ToString();
+                    if (j < columnCnt - 1)
+                    {
+                        resultString += ", ";
+                    }
+                }
+                resultString += System.Environment.NewLine;
+            }
+            File.WriteAllText(fileName, resultString);
+        }
+
+        public void PrintMatrix(bool[, ] mat, string fileName)
+        {
+            if (File.Exists(fileName))
+            {
+                File.Delete(fileName);
+            }
+            var rowCnt = mat.GetLength(0);
+            var columnCnt = mat.GetLength(1);
+            var resultString = "";
+            for (int i = 0; i < rowCnt; i++)
+            {
+                for (int j = 0; j < columnCnt; j++)
+                {
+                    if (mat[i, j])
+                    {
+                        resultString += "1";
+                    }
+                    else
+                    {
+                        resultString += "0";
+                    }
+                    if (j < columnCnt - 1)
+                    {
+                        resultString += ", ";
+                    }
+                }
+                resultString += System.Environment.NewLine;
+            }
+            File.WriteAllText(fileName, resultString);
+        }
     }
 }
